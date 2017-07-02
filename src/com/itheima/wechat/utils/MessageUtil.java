@@ -1,5 +1,6 @@
 package com.itheima.wechat.utils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,8 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
+import com.itheima.wechat.domain.News;
+import com.itheima.wechat.domain.NewsMessage;
 import com.itheima.wechat.domain.TextMessage;
 import com.thoughtworks.xstream.XStream;
 
@@ -22,6 +25,7 @@ public class MessageUtil {
 	public static final String MESSAGE_VOID="void";//视频
 	public static final String MESSAGE_LINK="link";//连接
 	public static final String MESSAGE_LOCATION="location";//位置
+	public static final String MESSAGE_NEWS="news";//位置
 	//事件
 	public static final String MESSAGE_EVENT="event";
 	public static final String MESSAGE_SUBSCRIBE="subscribe";
@@ -95,6 +99,44 @@ public class MessageUtil {
 		StringBuffer stringBuffer=new StringBuffer();
 		stringBuffer.append("test-test");
 		return stringBuffer.toString();
+	}
+	
+	/*
+	 * 图文消息转xml
+	 * */
+	public static String newsMessageToXML(NewsMessage newsMessage){
+		XStream xStream=new XStream();
+		xStream.alias("xml", newsMessage.getClass());
+		xStream.alias("item", new News().getClass());//消息体
+		return xStream.toXML(newsMessage);
+	}
+	
+	/*
+	 * 图文消息的请求参数
+	 * */
+	public static String initNewsMessage(String toUserName,String fromUserName){
+		String message=null;
+		List<News> newsList=new ArrayList<News>();
+		NewsMessage newsMessage = new NewsMessage();
+		//封装news
+		News news = new News();
+		news.setTitle("派大星~！！");//
+		news.setDescription("测试");
+		news.setPicUrl("http://mytest.tunnel.qydev.com/WeiXin/image/ca1349540923dd54a77123b0d109b3de9d8248ec.jpg");
+		news.setUrl("www.bing.com");//跳转地址
+		//放入list
+		newsList.add(news);
+		//封装newsMessage
+		newsMessage.setToUserName(fromUserName);
+		newsMessage.setFromUserName(toUserName);
+		newsMessage.setCreateTime(new Date().getTime());
+		newsMessage.setMsgType(MESSAGE_NEWS);
+		newsMessage.setArticles(newsList);
+		newsMessage.setArticleCount(newsList.size());
+		//转xml
+		message=newsMessageToXML(newsMessage);
+		return message;
+		
 	}
 	
 }
