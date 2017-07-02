@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.itheima.wechat.domain.TextMessage;
 import com.itheima.wechat.utils.CheckUtil;
 import com.itheima.wechat.utils.MessageUtil;
+import com.sun.xml.internal.bind.v2.model.core.ID;
 
 /**
  * Servlet implementation class WeChatServlet
@@ -31,36 +32,57 @@ public class WeChatServlet extends HttpServlet {
 			String timestamp = request.getParameter("timestamp");// 时间戳
 			String nonce = request.getParameter("nonce");// 随机数
 			String echostr = request.getParameter("echostr");// 随机字符串
-			
+
 			if (CheckUtil.checkSignature(signature, timestamp, nonce)) {
 				response.getWriter().print(echostr);
 			}
-			
-			//map接收文本消息参数，xml转换为map
+
+			// map接收文本消息参数，xml转换为map
 			Map<String, String> map = MessageUtil.xmlToMap(request);
 			String fromUserName = map.get("FromUserName");
 			String toUserName = map.get("ToUserName");
 			String msgType = map.get("MsgType");
 			String content = map.get("Content");
 
-			String message=null;
-			if("text".equals(msgType)){
-				TextMessage textMessage = new TextMessage();
-				textMessage.setFromUserName(toUserName);
-				textMessage.setToUserName(fromUserName);
-				textMessage.setMsgType("text");
-				textMessage.setCreateTime(new Date().getTime());
-				textMessage.setContent("你发送的消息是："+content);
-				//转为xml格式
-				message=MessageUtil.toXML(textMessage);
-				System.out.println("message:"+message);
+			String message = null;
+			// 文本类型
+			if (MessageUtil.MESSAGE_TEXT.equals(msgType)) {
+				/* TextMessage textMessage = new TextMessage();
+				 textMessage.setFromUserName(toUserName);
+				 textMessage.setToUserName(fromUserName);
+				 textMessage.setMsgType("text");
+				 textMessage.setCreateTime(new Date().getTime());
+				 textMessage.setContent("你发送的消息是：" + content);
+				 message = MessageUtil.toXML(textMessage);*/
+				
+				// 转为xml格式
+				// 判断客户端输入内容
+				if ("1".equals(content)) {
+					message = MessageUtil.initText(toUserName, fromUserName, MessageUtil.firstMenu());
+//					printWriter.print(message);
+				} else if ("2".equals(content)) {
+					message = MessageUtil.initText(toUserName, fromUserName, MessageUtil.secondMenu());
+//					printWriter.print(message);
+				} else if ("?".equals(content) || "？".equals(content)) {
+					message = MessageUtil.initText(toUserName, fromUserName, MessageUtil.menuText());
+				}
+
+				// 事件
+			} else if (MessageUtil.MESSAGE_EVENT.equals(msgType)) {
+				String eventType = map.get("Event");
+				// 事件类型：关注
+				if (MessageUtil.MESSAGE_SUBSCRIBE.equals(eventType)) {
+					message = MessageUtil.initText(toUserName, fromUserName, MessageUtil.menuText());
+				}
 			}
-			//输出流
+
+			System.out.println("message:" + message);
+			// 输出流
 			printWriter.print(message);
 		} catch (Exception e) {
 			e.printStackTrace();
-		}finally {
-			//关流
+		} finally {
+			// 关流
 			printWriter.close();
 		}
 	}
